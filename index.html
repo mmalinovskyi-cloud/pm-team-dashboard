@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PM Team Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d1117;
+  --bg2: #161b22;
+  --bg3: #21262d;
+  --border: #30363d;
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --blue: #388bfd;
+  --blue-bg: #1f6feb22;
+  --green: #3fb950;
+  --green-bg: #23863622;
+  --amber: #d29922;
+  --amber-bg: #9e6a0322;
+  --purple: #a371f7;
+  --purple-bg: #8957e522;
+  --red: #f85149;
+  --red-bg: #da363022;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* NAV */
+nav { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; gap: 0; height: 52px; }
+.nav-logo { font-weight: 700; font-size: 15px; color: var(--text); margin-right: 32px; letter-spacing: -0.3px; }
+.nav-logo span { color: var(--blue); }
+.nav-tab { padding: 0 16px; height: 52px; display: flex; align-items: center; font-size: 13px; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; white-space: nowrap; }
+.nav-tab:hover { color: var(--text); }
+.nav-tab.active { color: var(--text); border-bottom-color: var(--blue); }
+.nav-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.nav-badge { background: var(--bg3); border: 1px solid var(--border); padding: 4px 10px; border-radius: 20px; font-size: 12px; color: var(--muted); }
+.nav-badge span { color: var(--green); font-weight: 600; }
+.today-pill { background: var(--blue-bg); border: 1px solid var(--blue); padding: 4px 12px; border-radius: 20px; font-size: 12px; color: var(--blue); font-weight: 500; }
+
+/* SECTIONS */
+.section { display: none; padding: 28px 24px; max-width: 1600px; margin: 0 auto; }
+.section.active { display: block; }
+
+/* CARDS */
+.card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.card-sm { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+.stat-val { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+.stat-lbl { font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 6px; }
+.stat-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* GRID */
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.grid-12 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+/* PROGRESS */
+.prog-bar { height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; margin-top: 10px; }
+.prog-fill { height: 100%; border-radius: 3px; transition: width .3s; }
+
+/* TABLE */
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl th { text-align: left; padding: 10px 14px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); background: var(--bg3); border-bottom: 1px solid var(--border); font-weight: 500; }
+.tbl th:first-child { border-radius: 8px 0 0 0; }
+.tbl th:last-child { border-radius: 0 8px 0 0; }
+.tbl td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tr:hover td { background: var(--bg3); }
+.tbl-wrap { border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+
+/* BADGES */
+.badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+.badge-blue { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue)44; }
+.badge-green { background: var(--green-bg); color: var(--green); border: 1px solid var(--green)44; }
+.badge-amber { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber)44; }
+.badge-purple { background: var(--purple-bg); color: var(--purple); border: 1px solid var(--purple)44; }
+.badge-red { background: var(--red-bg); color: var(--red); border: 1px solid var(--red)44; }
+.badge-gray { background: var(--bg3); color: var(--muted); border: 1px solid var(--border); }
+.dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+
+/* AVATAR */
+.avatar { width: 36px; height: 36px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+
+/* GANTT */
+.gantt-wrap { overflow-x: auto; }
+.gantt-grid { display: grid; min-width: 900px; }
+.gantt-hd { background: var(--bg3); border-bottom: 1px solid var(--border); font-size: 11px; color: var(--muted); padding: 8px 0; text-align: center; }
+.gantt-row-info { padding: 12px 14px; border-bottom: 1px solid var(--border); background: var(--bg2); }
+.gantt-row-timeline { position: relative; border-bottom: 1px solid var(--border); background: var(--bg); }
+.task-bar { position: absolute; height: 22px; top: 50%; transform: translateY(-50%); border-radius: 4px; font-size: 10px; font-weight: 600; padding: 0 8px; display: flex; align-items: center; white-space: nowrap; overflow: hidden; cursor: pointer; transition: opacity .15s; }
+.task-bar:hover { opacity: .85; }
+.bar-blue { background: #1f6feb; border: 1px solid var(--blue); color: #fff; }
+.bar-green { background: #238636; border: 1px solid var(--green); color: #fff; }
+.bar-amber { background: #9e6a03; border: 1px solid var(--amber); color: #fff; }
+.bar-purple { background: #6e40c9; border: 1px solid var(--purple); color: #fff; }
+
+/* RATING */
+.stars { display: flex; gap: 2px; }
+.star { font-size: 14px; }
+.star-full { color: var(--amber); }
+.star-empty { color: var(--border); }
+
+/* SECTION HDR */
+.sec-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.sec-title { font-size: 16px; font-weight: 600; color: var(--text); }
+.sec-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+/* MEMBER CARD */
+.member-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 20px; cursor: pointer; transition: border-color .15s, transform .1s; }
+.member-card:hover { border-color: var(--blue); transform: translateY(-1px); }
+.member-card.selected { border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue)44; }
+
+/* SALARY TRACK */
+.salary-track { position: relative; height: 8px; background: var(--bg3); border-radius: 4px; margin: 8px 0 4px; overflow: visible; }
+.salary-fill { height: 100%; border-radius: 4px; }
+.salary-goal { position: absolute; top: -3px; width: 2px; height: 14px; background: var(--muted); border-radius: 1px; }
+
+/* MODAL */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 28px; max-width: 640px; width: 100%; max-height: 90vh; overflow-y: auto; }
+.modal-close { cursor: pointer; color: var(--muted); font-size: 20px; line-height: 1; }
+.modal-close:hover { color: var(--text); }
+
+/* TOOLTIP */
+.tooltip { display: none; position: absolute; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 12px; white-space: nowrap; z-index: 50; pointer-events: none; }
+
+/* PAGE HEADER */
+.page-hdr { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* FILTER ROW */
+.filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.filter-btn { padding: 5px 12px; border-radius: 20px; font-size: 12px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all .15s; }
+.filter-btn:hover, .filter-btn.active { background: var(--blue-bg); border-color: var(--blue); color: var(--blue); }
+
+/* TIMELINE DOTS */
+.tl-line { position: relative; padding-left: 24px; }
+.tl-line::before { content: ''; position: absolute; left: 7px; top: 0; bottom: 0; width: 1px; background: var(--border); }
+.tl-dot { position: absolute; left: 0; width: 16px; height: 16px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; }
+.tl-item { position: relative; padding-bottom: 16px; }
+.tl-item:last-child { padding-bottom: 0; }
+
+@media (max-width: 1100px) {
+  .grid-4 { grid-template-columns: repeat(2,1fr); }
+}
+@media (max-width: 700px) {
+  .grid-4, .grid-3, .grid-2, .grid-12 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">PM<span>Dashboard</span></div>
+  <div class="nav-tab active" onclick="showSection('overview', this)">Overview</div>
+  <div class="nav-tab" onclick="showSection('team', this)">Team</div>
+  <div class="nav-tab" onclick="showSection('workload', this)">Workload & Gantt</div>
+  <div class="nav-tab" onclick="showSection('tasks', this)">Tasks</div>
+  <div class="nav-tab" onclick="showSection('contracts', this)">Contracts</div>
+  <div class="nav-tab" onclick="showSection('analytics', this)">Analytics</div>
+  <div class="nav-right">
+    <div class="nav-badge">Rate: <span>$36/hr</span></div>
+    <div class="today-pill" id="datepill">June 1, 2026</div>
+  </div>
+</nav>
+
+<!-- ========== OVERVIEW ========== -->
+<div id="section-overview" class="section active">
+  <div class="page-hdr">
+    <div>
+      <div style="font-size:20px;font-weight:700;letter-spacing:-0.3px">Team Capacity & Performance</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:3px">Live monitoring · <span id="activeCount">7</span> active members · May–June 2026</div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center">
+      <div style="text-align:right">
+        <div class="stat-lbl">Monthly Target</div>
+        <div style="font-size:22px;font-weight:700;color:var(--blue)" class="mono">$28,500</div>
+      </div>
+      <div style="width:1px;height:40px;background:var(--border)"></div>
+      <div style="text-align:right">
+        <div class="stat-lbl">Earned MTD</div>
+        <div style="font-size:22px;font-weight:700;color:var(--green)" class="mono">$18,220</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-4" style="margin-bottom:24px">
+    <div class="card-sm">
+      <div class="stat-lbl">Team Load</div>
+      <div class="stat-val" style="color:var(--blue)">72.4%</div>
+      <div class="prog-bar"><div class="prog-fill" style="width:72.4%;background:var(--blue)"></div></div>
+      <div class="stat-sub">5 of 7 members active</div>
+    </div>
+    <div class="card-sm">
+      <div class="stat-lbl">Active Revenue</div>
+      <div class="stat-val" style="color:var(--green)">$18,250</div>
+      <div class="prog-bar"><div class="prog-fill" style="width:64%;background:var(--green)"></div></div>
+      <div class="stat-sub">In-progress tasks</div>
+    </div>
+    <div class="card-sm">
+      <div class="stat-lbl">Avg Daily Output</div>
+      <div class="stat-val">12.2 <span style="font-size:14px;font-weight:400;color:var(--muted)">hrs</span></div>
+      <div class="prog-bar"><div class="prog-fill" style="width:76%;background:var(--purple)"></div></div>
+      <div class="stat-sub">Across all members</div>
+    </div>
+    <div class="card-sm">
+      <div class="stat-lbl">On-time Delivery</div>
+      <div class="stat-val" style="color:var(--amber)">87%</div>
+      <div class="prog-bar"><div class="prog-fill" style="width:87%;background:var(--amber)"></div></div>
+      <div class="stat-sub">Last 30 days</div>
+    </div>
+  </div>
+
+  <!-- Member Overview Cards -->
+  <div class="sec-hdr">
+    <div>
+      <div class="sec-title">Team Members</div>
+      <div class="sec-sub">Click a member for full profile</div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-bottom:28px">
+    <!-- Members injected by JS -->
+  </div>
+
+  <!-- Quick Stats Row -->
+  <div class="grid-12" style="gap:20px">
+    <div class="card">
+      <div class="sec-hdr" style="margin-bottom:14px">
+        <div class="sec-title">Salary Progress</div>
+        <div class="badge badge-gray">May 2026</div>
+      </div>
+      <div id="salaryList" style="display:flex;flex-direction:column;gap:14px"></div>
+    </div>
+    <div class="card">
+      <div class="sec-hdr" style="margin-bottom:14px">
+        <div class="sec-title">Task Status Distribution</div>
+      </div>
+      <canvas id="statusChart" height="220"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ========== TEAM ========== -->
+<div id="section-team" class="section">
+  <div class="sec-hdr">
+    <div>
+      <div class="sec-title">Team Directory</div>
+      <div class="sec-sub">Roles, ratings & performance metrics</div>
+    </div>
+    <div class="filter-row" style="margin:0">
+      <button class="filter-btn active" onclick="filterTeam('all',this)">All</button>
+      <button class="filter-btn" onclick="filterTeam('Senior',this)">Senior</button>
+      <button class="filter-btn" onclick="filterTeam('Middle',this)">Middle</button>
+      <button class="filter-btn" onclick="filterTeam('Mid-Senior',this)">Mid-Senior</button>
+    </div>
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="tbl" id="teamTable">
+      <thead>
+        <tr>
+          <th>Member</th>
+          <th>Level</th>
+          <th>Skills</th>
+          <th>Rating</th>
+          <th>Tasks Done</th>
+          <th>Salary Earned</th>
+          <th>Goal</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="teamTableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Member Detail Modal -->
+  <div class="modal-overlay" id="memberModal" onclick="closeMemberModal(event)">
+    <div class="modal" id="memberModalContent">
+      <div id="memberModalInner"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== WORKLOAD ========== -->
+<div id="section-workload" class="section">
+  <div class="page-hdr" style="margin-bottom:20px">
+    <div>
+      <div style="font-size:18px;font-weight:700">Workload & Gantt Chart</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:2px">May 8 – May 17, 2026 · Today highlighted</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;font-size:12px">
+      <span class="badge badge-blue"><span class="dot" style="background:var(--blue)"></span>In Progress</span>
+      <span class="badge badge-purple"><span class="dot" style="background:var(--purple)"></span>QC</span>
+      <span class="badge badge-green"><span class="dot" style="background:var(--green)"></span>Ready</span>
+      <span class="badge badge-amber"><span class="dot" style="background:var(--amber)"></span>Paused</span>
+    </div>
+  </div>
+
+  <div class="card" style="padding:0">
+    <div class="gantt-wrap">
+      <div id="ganttContainer"></div>
+    </div>
+  </div>
+
+  <div class="grid-3" style="margin-top:20px">
+    <div class="card-sm">
+      <div class="stat-lbl">Overloaded Members</div>
+      <div class="stat-val" style="color:var(--amber)">1</div>
+      <div class="stat-sub">Tetiana Mudra (130%)</div>
+    </div>
+    <div class="card-sm">
+      <div class="stat-lbl">Available Capacity</div>
+      <div class="stat-val" style="color:var(--green)">2</div>
+      <div class="stat-sub">Iryna · Viacheslav</div>
+    </div>
+    <div class="card-sm">
+      <div class="stat-lbl">Deadlines This Week</div>
+      <div class="stat-val" style="color:var(--red)">3</div>
+      <div class="stat-sub">May 15, May 16, May 17</div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== TASKS ========== -->
+<div id="section-tasks" class="section">
+  <div class="sec-hdr">
+    <div>
+      <div class="sec-title">Task Board</div>
+      <div class="sec-sub">All active, paused & completed tasks</div>
+    </div>
+    <div class="filter-row" style="margin:0">
+      <button class="filter-btn active" onclick="filterTasks('all',this)">All</button>
+      <button class="filter-btn" onclick="filterTasks('In Progress',this)">In Progress</button>
+      <button class="filter-btn" onclick="filterTasks('QC',this)">QC</button>
+      <button class="filter-btn" onclick="filterTasks('Ready',this)">Ready</button>
+      <button class="filter-btn" onclick="filterTasks('Paused',this)">Paused</button>
+    </div>
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="tbl" id="tasksTable">
+      <thead>
+        <tr>
+          <th>Task / Project</th>
+          <th>Assignee</th>
+          <th>Status</th>
+          <th>Deadline</th>
+          <th>Value</th>
+          <th>Hours</th>
+          <th>Priority</th>
+        </tr>
+      </thead>
+      <tbody id="tasksTableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Timeline View -->
+  <div class="card" style="margin-top:20px">
+    <div class="sec-hdr" style="margin-bottom:16px">
+      <div class="sec-title">Task History Timeline</div>
+    </div>
+    <div id="taskTimeline" class="tl-line" style="max-height:320px;overflow-y:auto"></div>
+  </div>
+</div>
+
+<!-- ========== CONTRACTS ========== -->
+<div id="section-contracts" class="section">
+  <div class="sec-hdr">
+    <div>
+      <div class="sec-title">Smart Contracts & LOA</div>
+      <div class="sec-sub">Active agreements and letter of authority status</div>
+    </div>
+    <div class="badge badge-green">6 Active Contracts</div>
+  </div>
+
+  <div class="grid-12" style="margin-bottom:20px">
+    <div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--muted)">Smart Contracts</div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Contract ID</th><th>Member</th><th>Rate</th><th>Type</th><th>Status</th></tr></thead>
+          <tbody id="contractsBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--muted)">LOA Status</div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Member</th><th>Document</th><th>Signed</th><th>Valid Until</th></tr></thead>
+          <tbody id="loaBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="sec-hdr" style="margin-bottom:14px">
+      <div class="sec-title">Check-in Log</div>
+      <div class="sec-sub">Recent smart contract check-ins</div>
+    </div>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>Date</th><th>Member</th><th>Contract</th><th>Hours</th><th>Status</th></tr></thead>
+        <tbody id="checkinBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ========== ANALYTICS ========== -->
+<div id="section-analytics" class="section">
+  <div class="sec-hdr">
+    <div>
+      <div class="sec-title">Performance Analytics</div>
+      <div class="sec-sub">Earnings, load, and efficiency trends</div>
+    </div>
+  </div>
+
+  <div class="grid-3" style="margin-bottom:24px">
+    <div class="card-sm">
+      <div class="stat-lbl">Total Team Revenue (May)</div>
+      <div class="stat-val mono" style="color:var(--green)">$18,220</div>
+      <div class="stat-sub" style="color:var(--green)">+12% vs April</div>
+    </div>
+    <div class="card-sm">
+      <div class="stat-lbl">Avg Member Rating</div>
+      <div class="stat-val" style="color:var(--amber)">4.2 ★</div>
+      <div class="stat-sub">Based on deliverable quality</div>
+    </div>
+    <div class="card-sm">
+      <div class="stat-lbl">Hrs Logged (May)</div>
+      <div class="stat-val mono">342 <span style="font-size:14px;color:var(--muted)">hrs</span></div>
+      <div class="stat-sub">Team combined</div>
+    </div>
+  </div>
+
+  <div class="grid-12" style="margin-bottom:20px">
+    <div class="card">
+      <div class="sec-title" style="margin-bottom:16px">Earnings per Member</div>
+      <canvas id="earningsChart" height="260"></canvas>
+    </div>
+    <div class="card">
+      <div class="sec-title" style="margin-bottom:16px">Load History (last 4 weeks)</div>
+      <canvas id="loadChart" height="260"></canvas>
+    </div>
+  </div>
+
+  <div class="grid-12">
+    <div class="card">
+      <div class="sec-title" style="margin-bottom:16px">Salary vs Goal</div>
+      <canvas id="salaryGoalChart" height="200"></canvas>
+    </div>
+    <div class="card">
+      <div class="sec-title" style="margin-bottom:16px">Decision Log</div>
+      <div style="display:flex;flex-direction:column;gap:12px" id="decisionLog"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ SCRIPT -->
+<script>
+// ============================== DATA ==============================
+const TEAM = [
+  {
+    id: 'kyrylo', name: 'Kyrylo Kvaratskheliia', initials: 'KK', color: '#388bfd',
+    level: 'Middle', skills: ['Visualization', 'Staging'],
+    rating: 3.8, tasksDone: 12, salaryEarned: 1299, salaryGoal: 2500,
+    status: 'active', load: 55,
+    currentTask: "Setting - SKU28254; SKU28253; SKU28257; SKU28 + Setting - SKU28245, ",
+    tasks: ["Setting - SKU28254; SKU28253; SKU28257; SKU28255; SKU28256 - Sven 42\" Tufted Lounge Chair, MTO1155-MTO1159", "Setting - SKU28245, SKU28246, SKU28243, SKU28244, SKU28252 - Sven 88\u201d Sofa Bed, MTO1185 - MTO1189", "Mado 2F-OTM/BK C913"],
+    notes: 'SC earned: $2,485 done · $975 open · 2 in progress, 3 in QC · Total 30 SCs'
+  },
+  {
+    id: 'tetiana', name: 'Tetiana Mudra', initials: 'TM', color: '#3fb950',
+    level: 'Senior', skills: ['Visualization', 'Modeling', 'Animation'],
+    rating: 4.9, tasksDone: 41, salaryEarned: 9446, salaryGoal: 4500,
+    status: 'active', load: 130,
+    currentTask: "Lifestyle creation + SDSS 12 Splash | LS",
+    tasks: ["Lifestyle creation", "SDSS 12 Splash | LS", "Her Closet"],
+    notes: 'SC earned: $10,085 done · $1,522 open · 3 in progress, 3 in QC · Total 226 SCs'
+  },
+  {
+    id: 'roman', name: 'Roman Melnychenko', initials: 'RM', color: '#a371f7',
+    level: 'Middle', skills: ['Visualization', 'Animation'],
+    rating: 4.1, tasksDone: 68, salaryEarned: 9550, salaryGoal: 2500,
+    status: 'active', load: 85,
+    currentTask: "Mado umf\u00e4rber C281 + Levi f\u00fcr H24",
+    tasks: ["Mado umf\u00e4rber C281", "Levi f\u00fcr H24", "Esperanza Recoloring | LS"],
+    notes: 'SC earned: $20,297 done · $460 open · 8 in progress, 6 in QC · Total 224 SCs'
+  },
+  {
+    id: 'viacheslav', name: 'Viacheslav Basula', initials: 'VB', color: '#d29922',
+    level: 'Mid-Senior', skills: ['Modeling'],
+    rating: 4.0, tasksDone: 20, salaryEarned: 4703, salaryGoal: 4500,
+    status: 'active', load: 20,
+    currentTask: "Kitchen-Family Room | Modeling + MODELING",
+    tasks: ["Kitchen-Family Room | Modeling", "MODELING", "Modeling"],
+    notes: 'SC earned: $8,818 done · $620 open · 2 in progress, 3 in QC · Total 116 SCs'
+  },
+  {
+    id: 'iryna', name: 'Iryna Mykhailenko', initials: 'IM', color: '#f85149',
+    level: 'Middle', skills: ['Visualization', 'Animation'],
+    rating: 3.9, tasksDone: 38, salaryEarned: 1427, salaryGoal: 2500,
+    status: 'active', load: 65,
+    currentTask: "MM374 Giro | LS + Trellis House | Fire",
+    tasks: ["MM374 Giro | LS", "Trellis House | Fireplace hearth 2 views revisions", "2 ambiente pictures"],
+    notes: 'SC earned: $4,595 done · $170 open · 4 in progress, 8 in QC · Total 37 SCs'
+  },
+  {
+    id: 'yana', name: 'Yana Siednieva', initials: 'YS', color: '#58a6ff',
+    level: 'Senior', skills: ['Visualization', 'Animation', 'Modeling'],
+    rating: 4.6, tasksDone: 41, salaryEarned: 25664, salaryGoal: 4500,
+    status: 'active', load: 95,
+    currentTask: "Setting - SKU28221, SKU28220, SKU28219, SKU28 + Entry",
+    tasks: ["Setting - SKU28221, SKU28220, SKU28219, SKU28218, SKU28217 - Sven 88\" Grounded Tufted Sofa, MTO1066 - MTO1070", "Entry", "Interior | Perspective 2+3"],
+    notes: 'SC earned: $9,955 done · $2,064 open · 2 in progress, 3 in QC · Total 569 SCs'
+  },
+  {
+    id: 'andrey', name: 'Andrey Verholaz', initials: 'AV', color: '#ec6547',
+    level: 'Senior', skills: ['Full-Stack 3D', 'Visualization', 'Modeling', 'Animation'],
+    rating: 4.7, tasksDone: 45, salaryEarned: 14073, salaryGoal: 4500,
+    status: 'active', load: 90,
+    currentTask: "Dining Room Revisions + BLF Combination Unit",
+    tasks: ["Dining Room Revisions", "BLF Combination Unit", "Warren hallway products"],
+    notes: 'SC earned: $18,582 done · $2,710 open · 6 in progress, 8 in QC · Total 312 SCs'
+  }
+];
+
+const TASKS = [
+  { id: 'T001', name: 'Lifestyle creation', assignee: 'tetiana', status: 'In Progress', deadline: '2026-06-01', value: 400, hours: 20, priority: 'High' },
+  { id: 'T002', name: 'SDSS 12 Splash | LS', assignee: 'tetiana', status: 'In Progress', deadline: '2026-05-29', value: 400, hours: 18, priority: 'High' },
+  { id: 'T003', name: 'Her Closet', assignee: 'tetiana', status: 'In Progress', deadline: '2026-05-29', value: 250, hours: 12, priority: 'Medium' },
+  { id: 'T004', name: 'Mado umfärber C281', assignee: 'roman', status: 'In Progress', deadline: '2026-05-28', value: 460, hours: 14, priority: 'High' },
+  { id: 'T005', name: 'Levi für H24', assignee: 'roman', status: 'In Progress', deadline: '2026-05-28', value: 200, hours: 8, priority: 'Medium' },
+  { id: 'T006', name: 'Kitchen-Family Room | Modeling', assignee: 'viacheslav', status: 'In Progress', deadline: '2026-05-29', value: 330, hours: 16, priority: 'High' },
+  { id: 'T007', name: 'SDS 880 680S overhead in Platinum', assignee: 'viacheslav', status: 'QC', deadline: '2026-05-25', value: 210, hours: 10, priority: 'Medium' },
+  { id: 'T008', name: 'MM374 Giro | LS', assignee: 'iryna', status: 'In Progress', deadline: '2026-06-01', value: 170, hours: 8, priority: 'Medium' },
+  { id: 'T009', name: 'Marcus in C915', assignee: 'iryna', status: 'QC', deadline: '2026-05-30', value: 120, hours: 6, priority: 'Low' },
+  { id: 'T010', name: 'Entry', assignee: 'yana', status: 'In Progress', deadline: '2026-05-15', value: 420, hours: 18, priority: 'High' },
+  { id: 'T011', name: 'Interior | Perspective 2+3', assignee: 'yana', status: 'QC', deadline: '2026-05-29', value: 500, hours: 22, priority: 'High' },
+  { id: 'T012', name: 'Dining Room Revisions', assignee: 'andrey', status: 'In Progress', deadline: '2026-05-26', value: 950, hours: 28, priority: 'High' },
+  { id: 'T013', name: 'BLF Combination Unit', assignee: 'andrey', status: 'In Progress', deadline: '2026-05-29', value: 1300, hours: 35, priority: 'High' },
+  { id: 'T014', name: 'Sven Lounge Chair Setting', assignee: 'kyrylo', status: 'In Progress', deadline: '2026-06-01', value: 705, hours: 20, priority: 'High' },
+];
+
+const TIMELINE = [
+  { date: '2026-05-29', member: 'tetiana', action: 'Task in QC: Gemini für H24', task: 'Gemini für H24', type: 'qc' },
+  { date: '2026-05-29', member: 'andrey', action: 'New open SC: SILO $1,300', task: 'SILO', type: 'start' },
+  { date: '2026-05-29', member: 'yana', action: 'Open SC: Her Dressing Area $500', task: 'Her Dressing Area', type: 'start' },
+  { date: '2026-05-28', member: 'roman', action: 'In progress: Mado umfärber C281', task: 'Mado umfärber C281', type: 'progress' },
+  { date: '2026-05-28', member: 'viacheslav', action: 'QC: SDS 880 680S overhead', task: 'SDS 880 680S', type: 'qc' },
+  { date: '2026-05-26', member: 'andrey', action: 'Open SC: Exterior 3 views $950', task: 'Exterior 3 views', type: 'start' },
+  { date: '2026-05-25', member: 'iryna', action: 'In progress: MM374 Giro | LS', task: 'MM374 Giro', type: 'progress' },
+  { date: '2026-05-22', member: 'kyrylo', action: '30 SCs checked in · $1,299 share', task: 'OUTDOOR / Sven series', type: 'check' },
+];
+
+const CONTRACTS = [
+  { id: 'SC-226-TM', member: 'tetiana', rate: '$42/hr', type: 'Full-time', status: 'Active' },
+  { id: 'SC-312-AV', member: 'andrey', rate: '$40/hr', type: 'Full-time', status: 'Active' },
+  { id: 'SC-569-YS', member: 'yana', rate: '$38/hr', type: 'Full-time', status: 'Active' },
+  { id: 'SC-224-RM', member: 'roman', rate: '$36/hr', type: 'Part-time', status: 'Active' },
+  { id: 'SC-30-KK', member: 'kyrylo', rate: '$34/hr', type: 'Part-time', status: 'Active' },
+  { id: 'SC-116-VB', member: 'viacheslav', rate: '$36/hr', type: 'Contract', status: 'Active' },
+  { id: 'SC-37-IM', member: 'iryna', rate: '$34/hr', type: 'Part-time', status: 'Active' },
+];
+
+const LOA = [
+  { member: 'tetiana', doc: 'LOA-2026-04', signed: '2026-04-01', valid: '2026-10-01' },
+  { member: 'andrey', doc: 'LOA-2026-04', signed: '2026-04-01', valid: '2026-10-01' },
+  { member: 'yana', doc: 'LOA-2026-05', signed: '2026-05-02', valid: '2026-11-02' },
+  { member: 'roman', doc: 'LOA-2026-05', signed: '2026-05-02', valid: '2026-11-02' },
+  { member: 'kyrylo', doc: 'LOA-2026-05', signed: '2026-05-01', valid: '2026-11-01' },
+  { member: 'viacheslav', doc: 'LOA-2026-03', signed: '2026-03-15', valid: '2026-09-15' },
+  { member: 'iryna', doc: 'LOA-2026-04', signed: '2026-04-10', valid: '2026-10-10' },
+];
+
+const CHECKINS = [
+  { date: 'May 29', member: 'yana', contract: 'SC-569-YS', hours: 8.5, status: 'Approved' },
+  { date: 'May 29', member: 'andrey', contract: 'SC-312-AV', hours: 7.0, status: 'Approved' },
+  { date: 'May 29', member: 'tetiana', contract: 'SC-226-TM', hours: 8.0, status: 'Approved' },
+  { date: 'May 28', member: 'roman', contract: 'SC-224-RM', hours: 7.5, status: 'Approved' },
+  { date: 'May 28', member: 'viacheslav', contract: 'SC-116-VB', hours: 6.0, status: 'Approved' },
+  { date: 'May 27', member: 'iryna', contract: 'SC-37-IM', hours: 5.5, status: 'Approved' },
+  { date: 'May 26', member: 'kyrylo', contract: 'SC-30-KK', hours: 7.0, status: 'Approved' },
+];
+
+const DECISIONS = [
+  { date: 'May 29', text: 'Yana: 569 SCs total · $25,664 share earned — top performer of the team', type: 'green' },
+  { date: 'May 29', text: 'Andrey: 5 open SCs worth $2,710 · 6 in progress + 8 in QC — high workload', type: 'amber' },
+  { date: 'May 29', text: 'Roman: 68 done SCs · $20,297 earned — strong delivery record', type: 'blue' },
+  { date: 'May 28', text: 'Kyrylo: only 30 SCs · $1,299 share — needs more assignments', type: 'amber' },
+  { date: 'May 27', text: 'Tetiana: 226 SCs · $9,447 share · 6 open tasks worth $1,522', type: 'gray' },
+];
+
+// ============================== HELPERS ==============================
+function getMember(id) { return TEAM.find(m => m.id === id); }
+
+function statusBadge(s) {
+  const map = {
+    'In Progress': 'badge-blue',
+    'QC': 'badge-purple',
+    'Ready': 'badge-green',
+    'Paused': 'badge-amber',
+    'Done': 'badge-gray'
+  };
+  const dot = { 'In Progress': 'var(--blue)', 'QC': 'var(--purple)', 'Ready': 'var(--green)', 'Paused': 'var(--amber)', 'Done': 'var(--muted)' };
+  return `<span class="badge ${map[s]||'badge-gray'}"><span class="dot" style="background:${dot[s]||'gray'}"></span>${s}</span>`;
+}
+
+function stars(n) {
+  let s = '';
+  for (let i = 1; i <= 5; i++) s += `<span class="star ${i <= Math.round(n) ? 'star-full' : 'star-empty'}">${i <= Math.round(n) ? '★' : '☆'}</span>`;
+  return `<div class="stars">${s}</div>`;
+}
+
+function avatar(m, size=36) {
+  return `<div class="avatar" style="width:${size}px;height:${size}px;background:${m.color}22;color:${m.color};border:1px solid ${m.color}44">${m.initials}</div>`;
+}
+
+function levelBadge(l) {
+  const map = { 'Senior': 'badge-green', 'Middle': 'badge-blue', 'Mid-Senior': 'badge-purple' };
+  return `<span class="badge ${map[l]||'badge-gray'}">${l}</span>`;
+}
+
+function priorityBadge(p) {
+  const map = { 'High': 'badge-red', 'Medium': 'badge-amber', 'Low': 'badge-gray' };
+  return `<span class="badge ${map[p]}">${p}</span>`;
+}
+
+function contractStatusBadge(s) {
+  return s === 'Active' ? `<span class="badge badge-green">${s}</span>` : `<span class="badge badge-amber">${s}</span>`;
+}
+
+// ============================== OVERVIEW ==============================
+function renderOverview() {
+  // Member cards
+  const container = document.querySelector('#section-overview .member-card')?.parentElement
+    || document.querySelector('#section-overview div[style*="grid"]');
+
+  const grid = document.querySelector('#section-overview').querySelectorAll('[style*="auto-fill"]')[0];
+  if (grid) {
+    grid.innerHTML = TEAM.map(m => {
+      const pct = Math.min(100, Math.round(m.salaryEarned / m.salaryGoal * 100));
+      const barColor = pct >= 100 ? 'var(--green)' : pct >= 60 ? 'var(--blue)' : pct >= 30 ? 'var(--amber)' : 'var(--red)';
+      const loadColor = m.load >= 100 ? 'var(--red)' : m.load >= 80 ? 'var(--amber)' : 'var(--green)';
+      return `
+      <div class="member-card" onclick="openMemberModal('${m.id}')">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          ${avatar(m)}
+          <div>
+            <div style="font-size:13px;font-weight:600">${m.name}</div>
+            <div style="font-size:11px;color:var(--muted)">${m.level} · ${m.skills[0]}</div>
+          </div>
+          <div style="margin-left:auto">${levelBadge(m.level)}</div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Salary ${m.salaryEarned.toLocaleString()} / ${m.salaryGoal.toLocaleString()} USD</div>
+        <div class="salary-track">
+          <div class="salary-fill" style="width:${Math.min(100,pct)}%;background:${barColor}"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:6px">
+          <span style="color:${loadColor}">Load: ${m.load}%</span>
+          <span style="color:${barColor}">${pct}% of goal</span>
+        </div>
+        ${m.currentTask ? `<div style="font-size:11px;color:var(--muted);margin-top:8px;padding:6px 8px;background:var(--bg3);border-radius:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span style="color:var(--blue)">▶</span> ${m.currentTask}</div>` : `<div style="font-size:11px;color:var(--red);margin-top:8px;padding:6px 8px;background:var(--red-bg);border-radius:6px">No active task</div>`}
+      </div>`;
+    }).join('');
+  }
+
+  // Salary list
+  const sl = document.getElementById('salaryList');
+  if (sl) {
+    sl.innerHTML = TEAM.map(m => {
+      const pct = Math.min(100, Math.round(m.salaryEarned / m.salaryGoal * 100));
+      const barColor = pct >= 100 ? 'var(--green)' : pct >= 60 ? 'var(--blue)' : 'var(--amber)';
+      return `
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px">
+          <span style="display:flex;align-items:center;gap:8px">${avatar(m,24)}<span>${m.name.split(' ')[0]}</span></span>
+          <span class="mono" style="font-size:12px;color:${barColor}">$${m.salaryEarned.toLocaleString()} <span style="color:var(--muted)">/ $${m.salaryGoal.toLocaleString()}</span></span>
+        </div>
+        <div class="prog-bar" style="height:5px">
+          <div class="prog-fill" style="width:${Math.min(100,pct)}%;background:${barColor}"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Status chart
+  const ctx = document.getElementById('statusChart');
+  if (ctx && !ctx._chartRendered) {
+    ctx._chartRendered = true;
+    const counts = { 'In Progress': 0, 'QC': 0, 'Ready': 0, 'Paused': 0 };
+    TASKS.forEach(t => { if (counts[t.status] !== undefined) counts[t.status]++; });
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(counts),
+        datasets: [{ data: Object.values(counts), backgroundColor: ['#1f6feb','#6e40c9','#238636','#9e6a03'], borderColor: '#0d1117', borderWidth: 3 }]
+      },
+      options: {
+        plugins: { legend: { labels: { color: '#8b949e', font: { size: 12 } } } },
+        cutout: '65%'
+      }
+    });
+  }
+}
+
+// ============================== TEAM TABLE ==============================
+function renderTeamTable(filter = 'all') {
+  const tbody = document.getElementById('teamTableBody');
+  const rows = TEAM.filter(m => filter === 'all' || m.level === filter);
+  tbody.innerHTML = rows.map(m => {
+    const pct = Math.round(m.salaryEarned / m.salaryGoal * 100);
+    const barColor = pct >= 100 ? 'var(--green)' : pct >= 60 ? 'var(--blue)' : 'var(--amber)';
+    return `
+    <tr style="cursor:pointer" onclick="openMemberModal('${m.id}')">
+      <td>
+        <div style="display:flex;align-items:center;gap:10px">
+          ${avatar(m)}
+          <div>
+            <div style="font-weight:500;font-size:13px">${m.name}</div>
+            <div style="font-size:11px;color:var(--muted)">${m.id === 'iryna' ? 'No active task' : m.currentTask?.substring(0,30) + '…'}</div>
+          </div>
+        </div>
+      </td>
+      <td>${levelBadge(m.level)}</td>
+      <td><div style="display:flex;gap:4px;flex-wrap:wrap">${m.skills.map(s=>`<span class="badge badge-gray" style="font-size:10px">${s}</span>`).join('')}</div></td>
+      <td>${stars(m.rating)} <span style="font-size:12px;color:var(--muted)">${m.rating}</span></td>
+      <td><span class="mono" style="font-size:13px">${m.tasksDone}</span></td>
+      <td>
+        <div class="mono" style="font-size:13px;color:${barColor}">$${m.salaryEarned.toLocaleString()}</div>
+        <div class="prog-bar" style="height:4px;margin-top:4px"><div class="prog-fill" style="width:${Math.min(100,pct)}%;background:${barColor}"></div></div>
+      </td>
+      <td class="mono" style="font-size:12px;color:var(--muted)">$${m.salaryGoal.toLocaleString()}</td>
+      <td>${m.status === 'active' ? '<span class="badge badge-green">Active</span>' : '<span class="badge badge-amber">Available</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterTeam(filter, el) {
+  document.querySelectorAll('#section-team .filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderTeamTable(filter);
+}
+
+// ============================== MEMBER MODAL ==============================
+function openMemberModal(id) {
+  const m = getMember(id);
+  const pct = Math.min(100, Math.round(m.salaryEarned / m.salaryGoal * 100));
+  const barColor = pct >= 100 ? '#3fb950' : pct >= 60 ? '#388bfd' : '#d29922';
+  const memberTasks = TASKS.filter(t => t.assignee === id);
+  const contract = CONTRACTS.find(c => c.member === id);
+  const loa = LOA.find(l => l.member === id);
+
+  document.getElementById('memberModalInner').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+      <div style="display:flex;gap:14px;align-items:center">
+        ${avatar(m, 52)}
+        <div>
+          <div style="font-size:18px;font-weight:700">${m.name}</div>
+          <div style="font-size:13px;color:var(--muted);margin-top:2px">${m.level} · ${m.skills.join(', ')}</div>
+          <div style="margin-top:6px">${stars(m.rating)} </div>
+        </div>
+      </div>
+      <span onclick="closeMemberModalDirect()" style="cursor:pointer;color:var(--muted);font-size:22px;line-height:1">×</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
+      <div class="card-sm" style="padding:12px">
+        <div class="stat-lbl">Earned</div>
+        <div style="font-size:20px;font-weight:700;color:${barColor}" class="mono">$${m.salaryEarned.toLocaleString()}</div>
+      </div>
+      <div class="card-sm" style="padding:12px">
+        <div class="stat-lbl">Goal</div>
+        <div style="font-size:20px;font-weight:700;color:var(--muted)" class="mono">$${m.salaryGoal.toLocaleString()}</div>
+      </div>
+      <div class="card-sm" style="padding:12px">
+        <div class="stat-lbl">Load</div>
+        <div style="font-size:20px;font-weight:700;color:${m.load>100?'var(--red)':m.load>80?'var(--amber)':'var(--green)'}">${m.load}%</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Salary Progress</div>
+      <div class="salary-track" style="height:10px">
+        <div class="salary-fill" style="width:${Math.min(100,pct)}%;background:${barColor}"></div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">${pct}% of monthly goal</div>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">Active Tasks</div>
+      ${memberTasks.length ? memberTasks.map(t => `
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:13px">${t.name}</span>
+          <div style="display:flex;gap:8px;align-items:center">${statusBadge(t.status)}<span class="mono" style="font-size:12px;color:var(--green)">$${t.value.toLocaleString()}</span></div>
+        </div>`).join('') : '<div style="color:var(--muted);font-size:13px">No tasks assigned</div>'}
+    </div>
+
+    ${contract ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div class="card-sm" style="padding:12px">
+        <div class="stat-lbl">Contract</div>
+        <div style="font-size:13px;font-weight:500">${contract.id} · ${contract.rate}</div>
+        <div style="font-size:11px;color:var(--muted)">${contract.type}</div>
+      </div>
+      ${loa ? `<div class="card-sm" style="padding:12px">
+        <div class="stat-lbl">LOA</div>
+        <div style="font-size:13px;font-weight:500">${loa.doc}</div>
+        <div style="font-size:11px;color:var(--muted)">Valid until ${loa.valid}</div>
+      </div>` : ''}
+    </div>` : ''}
+
+    <div class="card-sm" style="background:var(--bg3);border-color:var(--border)">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">PM Notes</div>
+      <div style="font-size:13px;line-height:1.6">${m.notes}</div>
+    </div>
+  `;
+  document.getElementById('memberModal').classList.add('open');
+}
+
+function closeMemberModal(e) {
+  if (e.target.id === 'memberModal') document.getElementById('memberModal').classList.remove('open');
+}
+function closeMemberModalDirect() {
+  document.getElementById('memberModal').classList.remove('open');
+}
+
+// ============================== GANTT ==============================
+function renderGantt() {
+  const days = ['May 08','May 09','May 10','May 11','May 12 ●','May 13','May 14','May 15','May 16','May 17'];
+  const ganttData = [
+    { member: 'kyrylo', bars: [{ name: 'OUTDOOR / SO1672', start: 0, end: 5, type: 'bar-blue' }] },
+    { member: 'tetiana', bars: [
+      { name: 'Interior 3 Views', start: 1, end: 7, type: 'bar-blue' },
+      { name: 'Her Closet', start: 6, end: 10, type: 'bar-green', top: '72%' }
+    ]},
+    { member: 'roman', bars: [{ name: 'Orion 2.0 / Orion OV', start: 2, end: 9, type: 'bar-blue' }] },
+    { member: 'viacheslav', bars: [{ name: 'SD5 880 680S', start: 3, end: 7, type: 'bar-blue' }] },
+    { member: 'iryna', bars: [] },
+    { member: 'yana', bars: [
+      { name: 'Foundrycrew LS+Anim', start: 0, end: 7, type: 'bar-amber' },
+      { name: 'Nostalgia Club Spa', start: 7, end: 10, type: 'bar-purple', top: '72%' }
+    ]},
+    { member: 'andrey', bars: [
+      { name: 'SO1635 / SILO', start: 1, end: 8, type: 'bar-blue' },
+      { name: 'MODELING', start: 1, end: 7, type: 'bar-purple', top: '72%' }
+    ]},
+  ];
+
+  const cols = `180px 1fr`;
+  let html = `<div style="display:grid;grid-template-columns:${cols};min-width:900px">`;
+  html += `<div style="background:var(--bg3);padding:10px 14px;border-bottom:1px solid var(--border);font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase">Member</div>`;
+  html += `<div style="display:grid;grid-template-columns:repeat(10,1fr);background:var(--bg3);border-bottom:1px solid var(--border)">`;
+  days.forEach((d, i) => {
+    const isToday = i === 4;
+    html += `<div style="padding:8px 0;text-align:center;font-size:10px;color:${isToday?'#388bfd':'var(--muted)'};border-right:1px solid var(--border);${isToday?'background:#1f6feb11;font-weight:700':''}">${d}</div>`;
+  });
+  html += `</div>`;
+
+  ganttData.forEach(row => {
+    const m = getMember(row.member);
+    html += `<div style="padding:12px 14px;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;gap:8px">
+      ${avatar(m, 28)}
+      <div>
+        <div style="font-size:12px;font-weight:500">${m.name.split(' ')[0]}</div>
+        <div style="font-size:10px;color:var(--muted)">${m.level}</div>
+      </div>
+    </div>`;
+    html += `<div style="position:relative;border-bottom:1px solid var(--border);height:52px;background-image:linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:10% 100%;">`;
+    if (row.bars.length === 0) {
+      html += `<div style="position:absolute;top:50%;transform:translateY(-50%);left:8px;font-size:10px;color:var(--red);opacity:.7">Available – no tasks</div>`;
+    }
+    row.bars.forEach(b => {
+      const left = (b.start / 10 * 100).toFixed(1);
+      const width = ((b.end - b.start) / 10 * 100).toFixed(1);
+      const top = b.top || '50%';
+      html += `<div class="task-bar ${b.type}" style="left:${left}%;width:${width}%;top:${top}">${b.name}</div>`;
+    });
+    html += `</div>`;
+  });
+
+  // Today line
+  html += `</div>`;
+  document.getElementById('ganttContainer').innerHTML = html;
+}
+
+// ============================== TASKS TABLE ==============================
+function renderTasksTable(filter = 'all') {
+  const tbody = document.getElementById('tasksTableBody');
+  const rows = filter === 'all' ? TASKS : TASKS.filter(t => t.status === filter);
+  tbody.innerHTML = rows.map(t => {
+    const m = getMember(t.assignee);
+    const deadlineDate = new Date(t.deadline);
+    const today = new Date('2026-05-12');
+    const diff = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
+    const deadlineColor = diff < 0 ? 'var(--red)' : diff <= 2 ? 'var(--amber)' : 'var(--muted)';
+    return `<tr>
+      <td>
+        <div style="font-weight:500;font-size:13px">${t.name}</div>
+        <div style="font-size:11px;color:var(--muted)">${t.id}</div>
+      </td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${m ? avatar(m,24) : ''}
+          <span style="font-size:12px">${m?.name.split(' ')[0] || '—'}</span>
+        </div>
+      </td>
+      <td>${statusBadge(t.status)}</td>
+      <td style="color:${deadlineColor};font-size:12px" class="mono">${t.deadline}<div style="font-size:10px">${diff < 0 ? 'Overdue' : diff === 0 ? 'Today' : `in ${diff}d`}</div></td>
+      <td class="mono" style="color:var(--green);font-size:13px">$${t.value.toLocaleString()}</td>
+      <td class="mono" style="font-size:12px">${t.hours}h</td>
+      <td>${priorityBadge(t.priority)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterTasks(filter, el) {
+  document.querySelectorAll('#section-tasks .filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderTasksTable(filter);
+}
+
+function renderTimeline() {
+  const tl = document.getElementById('taskTimeline');
+  const typeColors = { qc: 'var(--purple)', start: 'var(--blue)', check: 'var(--green)', pause: 'var(--amber)', progress: 'var(--blue)', done: 'var(--green)' };
+  tl.innerHTML = TIMELINE.map(item => {
+    const m = getMember(item.member);
+    return `
+    <div class="tl-item">
+      <div class="tl-dot" style="background:${typeColors[item.type]}22;border-color:${typeColors[item.type]}">
+        <div style="width:6px;height:6px;background:${typeColors[item.type]};border-radius:50%"></div>
+      </div>
+      <div style="padding-left:10px">
+        <div style="font-size:12px;font-weight:500">${item.action}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${item.task} · ${m?.name.split(' ')[0]} · ${item.date}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============================== CONTRACTS ==============================
+function renderContracts() {
+  document.getElementById('contractsBody').innerHTML = CONTRACTS.map(c => {
+    const m = getMember(c.member);
+    return `<tr>
+      <td class="mono" style="font-size:12px;color:var(--blue)">${c.id}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${m ? avatar(m,24) : ''}
+          <span style="font-size:12px">${m?.name.split(' ')[0] || c.member}</span>
+        </div>
+      </td>
+      <td class="mono" style="font-size:12px;color:var(--green)">${c.rate}</td>
+      <td><span class="badge badge-gray">${c.type}</span></td>
+      <td>${contractStatusBadge(c.status)}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('loaBody').innerHTML = LOA.map(l => {
+    const m = getMember(l.member);
+    const validDate = new Date(l.valid);
+    const today = new Date('2026-06-01');
+    const expiring = (validDate - today) / (1000*60*60*24) < 60;
+    return `<tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${m ? avatar(m,24) : ''}
+          <span style="font-size:12px">${m?.name.split(' ')[0]}</span>
+        </div>
+      </td>
+      <td class="mono" style="font-size:11px">${l.doc}</td>
+      <td style="font-size:12px;color:var(--muted)">${l.signed}</td>
+      <td style="font-size:12px;color:${expiring?'var(--amber)':'var(--muted)'}">${l.valid}${expiring?' ⚠':''}  </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('checkinBody').innerHTML = CHECKINS.map(c => {
+    const m = getMember(c.member);
+    return `<tr>
+      <td style="font-size:12px;color:var(--muted)">${c.date}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${m ? avatar(m,24) : ''}
+          <span style="font-size:12px">${m?.name.split(' ')[0]}</span>
+        </div>
+      </td>
+      <td class="mono" style="font-size:12px;color:var(--blue)">${c.contract}</td>
+      <td class="mono" style="font-size:12px">${c.hours}h</td>
+      <td>${c.status === 'Approved' ? '<span class="badge badge-green">Approved</span>' : '<span class="badge badge-amber">Pending</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ============================== ANALYTICS ==============================
+function renderAnalytics() {
+  const earningsCtx = document.getElementById('earningsChart');
+  if (earningsCtx && !earningsCtx._rendered) {
+    earningsCtx._rendered = true;
+    new Chart(earningsCtx, {
+      type: 'bar',
+      data: {
+        labels: TEAM.map(m => m.name.split(' ')[0]),
+        datasets: [
+          { label: 'Earned', data: TEAM.map(m => m.salaryEarned), backgroundColor: TEAM.map(m => m.color + '88'), borderColor: TEAM.map(m => m.color), borderWidth: 1 },
+          { label: 'Goal', data: TEAM.map(m => m.salaryGoal), backgroundColor: 'transparent', borderColor: '#30363d', borderWidth: 2, type: 'line', pointStyle: false, borderDash: [4,4] }
+        ]
+      },
+      options: {
+        plugins: { legend: { labels: { color: '#8b949e', font: { size: 11 } } } },
+        scales: {
+          x: { ticks: { color: '#8b949e', font: { size: 11 } }, grid: { color: '#21262d' } },
+          y: { ticks: { color: '#8b949e', font: { size: 11 }, callback: v => '$'+v.toLocaleString() }, grid: { color: '#21262d' } }
+        }
+      }
+    });
+  }
+
+  const loadCtx = document.getElementById('loadChart');
+  if (loadCtx && !loadCtx._rendered) {
+    loadCtx._rendered = true;
+    new Chart(loadCtx, {
+      type: 'line',
+      data: {
+        labels: ['Apr W3','Apr W4','May W1','May W2'],
+        datasets: TEAM.map(m => ({
+          label: m.name.split(' ')[0],
+          data: [Math.max(10,m.load-30+Math.random()*20|0), Math.max(10,m.load-15+Math.random()*20|0), Math.max(10,m.load-5+Math.random()*10|0), m.load],
+          borderColor: m.color,
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          pointRadius: 3,
+          tension: 0.4
+        }))
+      },
+      options: {
+        plugins: { legend: { labels: { color: '#8b949e', font: { size: 10 }, boxWidth: 12 } } },
+        scales: {
+          x: { ticks: { color: '#8b949e', font: { size: 11 } }, grid: { color: '#21262d' } },
+          y: { ticks: { color: '#8b949e', font: { size: 11 }, callback: v => v+'%' }, grid: { color: '#21262d' }, min: 0, max: 140 }
+        }
+      }
+    });
+  }
+
+  const sgCtx = document.getElementById('salaryGoalChart');
+  if (sgCtx && !sgCtx._rendered) {
+    sgCtx._rendered = true;
+    new Chart(sgCtx, {
+      type: 'bar',
+      data: {
+        labels: TEAM.map(m => m.name.split(' ')[0]),
+        datasets: [
+          { label: '% of Goal', data: TEAM.map(m => Math.round(m.salaryEarned/m.salaryGoal*100)), backgroundColor: TEAM.map(m => m.salaryEarned >= m.salaryGoal ? '#23863688' : '#1f6feb88'), borderColor: TEAM.map(m => m.salaryEarned >= m.salaryGoal ? '#3fb950' : '#388bfd'), borderWidth: 1 }
+        ]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#8b949e', font: { size: 11 } }, grid: { color: '#21262d' } },
+          y: { ticks: { color: '#8b949e', font: { size: 11 }, callback: v => v+'%' }, grid: { color: '#21262d' }, min: 0, max: 140 }
+        }
+      }
+    });
+  }
+
+  const dl = document.getElementById('decisionLog');
+  if (dl && !dl._rendered) {
+    dl._rendered = true;
+    const colorMap = { green: 'var(--green)', amber: 'var(--amber)', blue: 'var(--blue)', gray: 'var(--muted)' };
+    dl.innerHTML = DECISIONS.map(d => `
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <div style="width:8px;height:8px;border-radius:50%;background:${colorMap[d.type]};margin-top:5px;flex-shrink:0"></div>
+        <div>
+          <div style="font-size:13px">${d.text}</div>
+          <div style="font-size:11px;color:var(--muted)">${d.date}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+// ============================== NAV ==============================
+function showSection(name, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+  el.classList.add('active');
+
+  if (name === 'team') renderTeamTable();
+  if (name === 'workload') renderGantt();
+  if (name === 'tasks') { renderTasksTable(); renderTimeline(); }
+  if (name === 'contracts') renderContracts();
+  if (name === 'analytics') renderAnalytics();
+}
+
+// ============================== INIT ==============================
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('datepill').textContent = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+  // Render overview member grid by finding the right container
+  setTimeout(() => {
+    const allGrids = document.querySelectorAll('#section-overview > div');
+    allGrids.forEach(g => {
+      if (g.style.display?.includes('grid') || g.className?.includes('grid')) {
+        // check if it has auto-fill in style
+        if (g.getAttribute('style') && g.getAttribute('style').includes('auto-fill')) {
+          renderOverview();
+        }
+      }
+    });
+    renderOverview();
+  }, 100);
+});
+</script>
+</body>
+</html>
